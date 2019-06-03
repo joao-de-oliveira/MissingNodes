@@ -30,6 +30,9 @@ class Network:
         self.DensityTolerance = DensityTolerance
         self.ClusteringExclusionIndexList = []
         self.SafeRemovalList = list(np.setdiff1d(list(self.Greal),ForbiddenList))
+        self.reference_list = list(self.Greal)
+        self.SafeRemovalList=Network.parse_list(self,self.SafeRemovalList)
+        del ForbiddenList
 
     def create_test_network(self): #This function will replicate Greal into Gtest and subsequently remove nodes from Gtest
         Gtest = copy.deepcopy(self.Greal) #Deep Copy is necessary here to prevent Gtest from being a reference to Greal, we need Greal fully intact so that we can accurately use it for comparison later while evaluation the prediction's effectiveness
@@ -40,8 +43,9 @@ class Network:
                 if F == 25: #25 is an arbitrary stopping point, easy to convert to one that scales with network size.
                     raise Exception('Network not well suited to keep fully connected')      
                 i = choice(self.SafeRemovalList) #to prevent bias we select a node index entirely at random
-                if Network.test_connected(self,Gtest,i):
-                    Gtest.remove_node(i)
+                name = Network.get_name_from_reference_list(self,i)
+                if Network.test_connected(self,Gtest,name):
+                    Gtest.remove_node(name)
                     self.SafeRemovalList.remove(i)
                     K+=1 #We successfully removed a node so we iterate K
                 else:
@@ -49,6 +53,7 @@ class Network:
                     F+=1
                     continue          
         else: #If we don't care about the graph being fully connected ; the procedure is exactly the same as above, just with no checking if the node we're removing is problematic or not
+            #TODO FIX
             while K < self.num_nodes_to_remove:
                 i = randrange(0,stop=(Gtest.number_of_nodes()),step=1)
                 Gtest.remove_node(list(Gtest)[i])
@@ -71,7 +76,8 @@ class Network:
             for k in list_of_edges_of_i: #remove all (i,k) edges
                 Gtest.remove_edge(i,k)
             if nx.number_connected_components(Gtest)==2: #number of components needs to be 2 for the node to be safe to remove, if it's >2 then it means we have (#Components - 1) subgraphs and the isolated node which means we've split the graph
-                self.ComparisonList.append(list_of_edges_of_i)
+                parsed_list = Network.parse_list(self,list_of_edges_of_i)
+                self.ComparisonList.append(parsed_list)
                 return True
             else:
                 for j in list_of_edges_of_i:
@@ -253,6 +259,21 @@ class Network:
                 value = GEDcostMatrix[row][column]
                 totalcost += value
         return totalcost
+
+    def get_index_from_reference_list(self,name):
+        index = str(self.reference_list.index(name))
+        return index
+
+    def get_name_from_reference_list(self,index):
+        name = self.reference_list[index]
+        return name
+
+    def parse_list(self,list_to_parse):
+        for name in list_to_parse:
+            index = Network.get_index_from_reference_list(self,name)
+            spot = list_to_parse.index(name)
+            list_to_parse[spot]=index
+        return list_to_parse
 
     def comparison(self,GraphEditDistance): #it's a ratio
         Ratio = GraphEditDistance / self.TestGraphEditDistance
