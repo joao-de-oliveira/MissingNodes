@@ -7,10 +7,10 @@ from network import Network
 np.set_printoptions(threshold=np.inf)
 #Input
 connected = True
-repetitions = 50
+repetitions = 10
 filename = 'dolphins'
 labeltype='labels'
-MaxNodesRemoved=150
+MaxNodesRemoved=5
 AffinityType='AA'
 DensityTolerance=0.005
 #File Parsing
@@ -18,7 +18,7 @@ G = nx.read_gml(filename+'.gml',label=labeltype)
 G = parse_G(G,labeltype,connected)
 ForbiddenList = create_forbidden_list(G)
 #Aux Code
-for node_removal_discrete in range(1,MaxNodesRemoved):
+for node_removal_discrete in range(3,MaxNodesRemoved):
     F=1
     AUC=np.zeros(repetitions,dtype=float)
     Ratio=np.zeros(repetitions,dtype=float)

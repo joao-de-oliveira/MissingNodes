@@ -24,8 +24,6 @@ class Network:
             self.Qcontrol = 0
         self.directed = directed
         self.ComparisonList = []
-        self.VerificationList = []
-        self.VerificationListMirror = []
         self.bool_list = []
         self.DensityTolerance = DensityTolerance
         self.ClusteringExclusionIndexList = []
@@ -63,11 +61,20 @@ class Network:
         return Gtest
 
     def create_boolmatrix(self):
+        arraylength=0
+        for a in range(0,len(self.ComparisonList)):
+            arraylength=int(arraylength+((len(self.ComparisonList[a])-1)/2)*len(self.ComparisonList[a]))
+        self.VerificationList = np.zeros([arraylength,2],dtype=np.int32)
+        self.VerificationListMirror = np.zeros([arraylength,2],dtype=np.int32)
+        a=0
         for i in range(int(len(self.ComparisonList))): #ComparisonList is a list of tuples, i runs through every tuple
             for j in range(int(len(self.ComparisonList[i]))): # j runs through every element of each tuple
                 for k in range(j+1,len(self.ComparisonList[i])): # k runs 'ahead' of j to avoid (j,j) or (j,j-1) elements
-                    self.VerificationList.append([self.ComparisonList[i][j],self.ComparisonList[i][k]])
-                    self.VerificationListMirror.append([self.ComparisonList[i][k],self.ComparisonList[i][j]]) #We don't know the order of predicted additions, might be (i,j) or (j,i) so the safe approach is to recreate a mirrored list and compare to both possibilities
+                    #self.VerificationList.append([self.ComparisonList[i][j],self.ComparisonList[i][k]])
+                    #self.VerificationListMirror.append([self.ComparisonList[i][k],self.ComparisonList[i][j]]) #We don't know the order of predicted additions, might be (i,j) or (j,i) so the safe approach is to recreate a mirrored list and compare to both possibilities
+                    self.VerificationList[a]=[self.ComparisonList[i][j],self.ComparisonList[i][k]]
+                    self.VerificationListMirror[a]=[self.ComparisonList[i][k],self.ComparisonList[i][j]]
+                    a+=1
 
     def test_connected(self,Gtest,i):
         edges_of_i = Gtest.neighbors(i) #We select all the edges connecting to the selected node to verify if it's a safe node to remove
@@ -272,7 +279,7 @@ class Network:
         for name in list_to_parse:
             index = Network.get_index_from_reference_list(self,name)
             spot = list_to_parse.index(name)
-            list_to_parse[spot]=index
+            list_to_parse[spot]=int(index)
         return list_to_parse
 
     def comparison(self,GraphEditDistance): #it's a ratio
