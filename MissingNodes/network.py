@@ -24,7 +24,7 @@ class Network:
             self.Qcontrol = 0
         self.directed = directed
         self.ComparisonList = []
-        self.bool_list = []
+        #self.bool_list = []
         self.DensityTolerance = DensityTolerance
         self.ClusteringExclusionIndexList = []
         self.SafeRemovalList = list(np.setdiff1d(list(self.Greal),ForbiddenList))
@@ -63,7 +63,7 @@ class Network:
     def create_boolmatrix(self):
         arraylength=0
         for a in range(0,len(self.ComparisonList)):
-            arraylength=int(arraylength+((len(self.ComparisonList[a])-1)/2)*len(self.ComparisonList[a]))
+            arraylength=arraylength+((len(self.ComparisonList[a])-1)//2)*len(self.ComparisonList[a])
         self.VerificationList = np.zeros([arraylength,2],dtype=np.int32)
         self.VerificationListMirror = np.zeros([arraylength,2],dtype=np.int32)
         a=0
@@ -120,18 +120,23 @@ class Network:
             ScoreList.append([u,v,p])
         ScoreList = [item for item in ScoreList if (('DuplicatedNode' in item[0]) and ('DuplicatedNode' in item[1]))] #Purge all scores not related to duplicated nodes
         ScoreList.sort(key=operator.itemgetter(2),reverse=True) #Sort the list by decreasing scores
-        self.AUCscores = [c for a,b,c in ScoreList] #Pick out the sorted score list for AUC calculation
+        self.AUCscores = np.array([c for a,b,c in ScoreList],dtype=np.float) #Pick out the sorted score list for AUC calculation
         self.ClusteringList = [(Network.string_subtract(self,a,'DuplicatedNode'),Network.string_subtract(self,b,'DuplicatedNode')) for a,b,c in ScoreList] #Clean up the list to make it easier to match up things later. The list should have only the original node labels
 
     def create_verification_list(self):
         #VerificationList = [(Network.string_subtract(self,a,'DuplicatedNode'),Network.string_subtract(self,b,'DuplicatedNode')) for a,b,c in self.ScoreList] #Clean up the labels from Duplication
         VerificationList = self.ClusteringList
-        VerificationList = [[a,b] for a,b in VerificationList] #Turn elements into tuples to match up with earlier data organisation so comparisons can be made
+        VerificationList = np.array([[Network.get_index_from_reference_list(self,a),Network.get_index_from_reference_list(self,b)] for a,b in VerificationList],dtype=np.int32) #Turn elements into tuples to match up with earlier data organisation so comparisons can be made
+        self.bool_list=np.empty(len(VerificationList),dtype=np.int8)
         for i in range(len(VerificationList)):
-            if VerificationList[i] in self.VerificationList or VerificationList[i] in self.VerificationListMirror: #Check if the clustering pairs are the pairs we removed earlier to calculate AUC
-                self.bool_list.append(1)
+            #VerificationList[i] in self.VerificationList or VerificationList[i] in self.VerificationListMirror: 
+            #Check if the clustering pairs are the pairs we removed earlier to calculate AUC
+            if any(np.equal(self.VerificationList,VerificationList[i]).all(1)) or any(np.equal(self.VerificationListMirror,VerificationList[i]).all(1)):
+                #self.bool_list.append(1)
+                self.bool_list[i]=1
             else:
-                self.bool_list.append(0)
+                #self.bool_list.append(0)
+                self.bool_list[i]=0
 
     def string_subtract(self,a,b): #Example: a='MaximalCat', b='Maximal', c = string_subtract(a,b) = 'Cat'
         return "".join(a.rsplit(b))
@@ -217,8 +222,8 @@ class Network:
         #         y_true[K]=1
         #     else:
         #         y_true[K]=0
-        y_scores=np.array(self.AUCscores) #Numpy is a sweetheart that converts lists to arrays without much fuss
-        y_true=np.array(self.bool_list)
+        y_scores=self.AUCscores #Numpy is a sweetheart that converts lists to arrays without much fuss
+        y_true=self.bool_list
         auc_score=roc_auc_score(y_true,y_scores)
         delattr(self,'bool_list')
         delattr(self,'VerificationList')
