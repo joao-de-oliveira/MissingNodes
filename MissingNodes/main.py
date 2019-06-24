@@ -11,7 +11,6 @@ repetitions = 50
 filename = 'dolphins'
 labeltype='labels'
 MaxNodesRemoved=150
-AffinityType='AA'
 DensityTolerance=0.005
 #File Parsing
 G = nx.read_gml(filename+'.gml',label=labeltype)
