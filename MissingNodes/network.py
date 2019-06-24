@@ -63,7 +63,7 @@ class Network:
     def create_boolmatrix(self):
         arraylength=0
         for a in range(0,len(self.ComparisonList)):
-            arraylength=arraylength+((len(self.ComparisonList[a])-1)//2)*len(self.ComparisonList[a])
+            arraylength=arraylength+int(((len(self.ComparisonList[a])-1)/2)*len(self.ComparisonList[a]))
         self.VerificationList = np.zeros([arraylength,2],dtype=np.int32)
         self.VerificationListMirror = np.zeros([arraylength,2],dtype=np.int32)
         a=0
@@ -145,9 +145,10 @@ class Network:
         self.Gexpanded = copy.deepcopy(Gtest)
         self.PhantomIDMatchingList = []
         self.CreatedIDMatchingList = []
-        for i in range(len(self.ClusteringList)):
-            self.ClusteringList[i][0]=Network.get_index_from_reference_list(self,self.ClusteringList[i][0])
-            self.ClusteringList[i][1]=Network.get_index_from_reference_list(self,self.ClusteringList[i][1])
+        # for i in range(len(self.ClusteringList)):
+        #     self.ClusteringList[i][0]=Network.get_index_from_reference_list(self,self.ClusteringList[i][0])
+        #     self.ClusteringList[i][1]=Network.get_index_from_reference_list(self,self.ClusteringList[i][1])
+        self.ClusteringList = [[Network.get_index_from_reference_list(self,a),Network.get_index_from_reference_list(self,b)] for a,b in self.ClusteringList]
         K = 0
         Q = 0
         while Q < self.nodes_to_predict+self.Qcontrol: #Qcontrol = 0 if no clustering after last node, Q=1 for clustering until self.nodes_to_predict is achieved
@@ -195,10 +196,10 @@ class Network:
     
     def cluster_virtual_nodes(self,Q,K):
         if self.ClusteringList[K][0] in self.PhantomIDMatchingList: #If it's the first element of the tuple
-            Node = Network.get_name_from_reference_list(self,self.CreatedIDMatchingList[int(self.PhantomIDMatchingList.index(self.ClusteringList[K][0])/2)]) #Check which created node it corresponds to
+            Node = self.CreatedIDMatchingList[int(self.PhantomIDMatchingList.index(self.ClusteringList[K][0])/2)] #Check which created node it corresponds to
             self.Gexpanded.add_edge(Node,Network.get_name_from_reference_list(self,self.ClusteringList[K][1]))
         else: #If it's the second
-            Node = Network.get_name_from_reference_list(self,self.CreatedIDMatchingList[int(self.PhantomIDMatchingList.index(self.ClusteringList[K][1])/2)])
+            Node = self.CreatedIDMatchingList[int(self.PhantomIDMatchingList.index(self.ClusteringList[K][1])/2)]
             self.Gexpanded.add_edge(Node,Network.get_name_from_reference_list(self,self.ClusteringList[K][0]))
         self.PhantomIDMatchingList.extend([self.ClusteringList[K][0],self.ClusteringList[K][1]]) #Extend is used so that 2 indices are added rather than a tuple, using append here will create something like A=[1 2 3], A.append([4,5]) -> A=[1 2 3 [4 5]] where A(1:3) are single elements and A(4) = [4 5]. DO NOT USE APPEND HERE.
         self.CreatedIDMatchingList.append(Node)
@@ -280,7 +281,7 @@ class Network:
         return index
 
     def get_name_from_reference_list(self,index):
-        name = self.reference_list[index]
+        name = self.reference_list[int(index)]
         return name
 
     def parse_list(self,list_to_parse):
