@@ -18,7 +18,7 @@ G = parse_G(G,labeltype,connected)
 ForbiddenList = create_forbidden_list(G)
 #Aux Code
 for AffinityType in ['AA','JC','RA','PA']:
-    for node_removal_discrete in range(1,MaxNodesRemoved):
+    for node_removal_discrete in range(26,30):
         F=1
         AUC=np.zeros(repetitions,dtype=float)
         Ratio=np.zeros(repetitions,dtype=float)

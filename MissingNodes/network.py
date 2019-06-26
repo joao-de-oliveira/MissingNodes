@@ -206,8 +206,8 @@ class Network:
     
     def add_node(self,Q,K):
         self.Gexpanded.add_node('PredictedNode'+str(Q)) #Create a node
-        self.Gexpanded.add_edge('PredictedNode'+str(Q),self.ClusteringList[K][1]) #Connect it to the predicted neighbor(s)
-        self.Gexpanded.add_edge('PredictedNode'+str(Q),self.ClusteringList[K][0]) #Second neighbor connection
+        self.Gexpanded.add_edge('PredictedNode'+str(Q),Network.get_name_from_reference_list(self,self.ClusteringList[K][1])) #Connect it to the predicted neighbor(s)
+        self.Gexpanded.add_edge('PredictedNode'+str(Q),Network.get_name_from_reference_list(self,self.ClusteringList[K][0])) #Second neighbor connection
         self.PhantomIDMatchingList.extend([self.ClusteringList[K][0],self.ClusteringList[K][1]]) #Bookkeeping
         self.CreatedIDMatchingList.append('PredictedNode'+str(Q)) #Bookkeeping  
 
@@ -246,16 +246,19 @@ class Network:
             GEDcostMatrix.append([])
             for _ in range(self.num_nodes_to_remove):
                 GEDcostMatrix[i].append(0)
+        for i in range(len(self.ComparisonList)):
+            for j in range(len(self.ComparisonList[i])):
+                self.ComparisonList[i][j]=Network.get_name_from_reference_list(self,self.ComparisonList[i][j])
         for R in range(0,self.num_nodes_to_remove):
             for P in range(0,self.num_nodes_to_remove):
                 if len(PredictedComparisonList[P])-len(self.ComparisonList[R]) < 0:
-                    mismatchedElements_P_notin_R = np.setdiff1d(PredictedComparisonList[P],self.ComparisonList[R])
+                    mismatchedElements_P_notin_R = list(np.setdiff1d(PredictedComparisonList[P],self.ComparisonList[R]))
                     GEDcostMatrix[R][P] = abs(len(PredictedComparisonList[P])-len(self.ComparisonList[R])) + len(mismatchedElements_P_notin_R)
                 elif len(PredictedComparisonList[P])-len(self.ComparisonList[R]) == 0:
-                    mismatchedElements_P_notin_R = np.setdiff1d(PredictedComparisonList[P],self.ComparisonList[R])
+                    mismatchedElements_P_notin_R = list(np.setdiff1d(PredictedComparisonList[P],self.ComparisonList[R]))
                     GEDcostMatrix[R][P] = len(mismatchedElements_P_notin_R)
                 else: #len(PredictedComparisonList[P])-len(self.ComparisonList[R]) > 0:
-                    mismatchedElements_P_notin_R = np.setdiff1d(PredictedComparisonList[P],self.ComparisonList[R])
+                    mismatchedElements_P_notin_R = list(np.setdiff1d(PredictedComparisonList[P],self.ComparisonList[R]))
                     GEDcostMatrix[R][P] = len(mismatchedElements_P_notin_R) + abs(len(PredictedComparisonList[P])-len(self.ComparisonList[R]))
         delattr(self,'ComparisonList')
         if self.num_nodes_to_remove == 1:
