@@ -7,46 +7,44 @@ from network import Network
 np.set_printoptions(threshold=np.inf)
 #Input
 connected = True
-repetitions = 50
-filename = 'dolphins'
+repetitions = 10
+filename = 'hep-th'
 labeltype='labels'
 MaxNodesRemoved=150
 DensityTolerance=0.005
+AffinityType='JC'
+pctRemoval=0.60
 #File Parsing
 G = nx.read_gml(filename+'.gml',label=labeltype)
 G = parse_G(G,labeltype,connected)
 ForbiddenList = create_forbidden_list(G)
 #Aux Code
-for AffinityType in ['AA','JC','RA','PA']:
-    for node_removal_discrete in range(26,30):
-        F=1
-        AUC=np.zeros(repetitions,dtype=float)
-        Ratio=np.zeros(repetitions,dtype=float)
-        for i in range(0, repetitions):
-            #Network Object Creation & Parsing
-            A = Network(G,connected=connected,node_removal_discrete=node_removal_discrete,ForbiddenList=ForbiddenList,DensityTolerance=DensityTolerance)
-            if i == 0:
-                Nodes_Removed = A.nodes_to_predict
-            try:
-                Gtest = Network.create_test_network(A)
-                #AUC
-                Network.create_boolmatrix(A)
-                Gphantom = Network.create_phantoms(A,Gtest)
-                Network.check_affinity(A,Gphantom,AffinityType=AffinityType)
-                del Gphantom
-                Network.create_verification_list(A)
-                AUC[i] = Network.auc_score(A)
-                print('AUC = ',AUC[i])
-                Network.add_predicted_nodes(A,Gtest)
-                GED = Network.evaluation(A)
-                Ratio[i] = GED/A.TestGraphEditDistance
-                print('Ratio = ', Ratio[i])
-                del A, Gtest
-            except:
-                F=0
-                break
-        if F > 0:
-            np.savetxt(filename+'_'+AffinityType+'_AUC'+'_'+str(node_removal_discrete)+'.csv',AUC,delimiter=',')
-            np.savetxt(filename+'_'+AffinityType+'_Ratio'+'_'+str(node_removal_discrete)+'.csv',Ratio,delimiter=',')
-        else:
-            pass
+F=1
+AUC=np.zeros(repetitions,dtype=float)
+Ratio=np.zeros(repetitions,dtype=float)
+for i in range(0, repetitions):
+    #Network Object Creation & Parsing
+    A = Network(G,connected=connected,pctRemoval=pctRemoval,ForbiddenList=ForbiddenList,DensityTolerance=DensityTolerance)
+    if i == 0:
+        Nodes_Removed = A.nodes_to_predict
+    try:
+        Gtest = Network.create_test_network(A)
+        #AUC
+        Network.create_boolmatrix(A)
+        Gphantom = Network.create_phantoms(A,Gtest)
+        Network.check_affinity(A,Gphantom,AffinityType=AffinityType)
+        del Gphantom
+        Network.create_verification_list(A)
+        AUC[i] = Network.auc_score(A)
+        print('AUC = ',AUC[i])
+        Network.add_predicted_nodes(A,Gtest)
+        GED = Network.evaluation(A)
+        Ratio[i] = GED/A.TestGraphEditDistance
+        print('Ratio = ', Ratio[i])
+        del A, Gtest
+    except:
+        F=0
+        break
+if F > 0:
+    np.savetxt(filename+'_'+AffinityType+'_AUC'+'_'+str(Nodes_Removed)+'.csv',AUC,delimiter=',')
+    np.savetxt(filename+'_'+AffinityType+'_Ratio'+'_'+str(Nodes_Removed)+'.csv',Ratio,delimiter=',')

@@ -23,7 +23,7 @@ def parse_G(G,labeltype,connected):
     if labeltype=='id':
         ListOfUtterStupidity=[]
         for i in range(G.number_of_nodes()):
-            ListOfUtterStupidity.append('StupidLabel'+str(list(G)[i]))
+            ListOfUtterStupidity.append('Label'+str(list(G)[i]))
         mapping = dict(zip(G, ListOfUtterStupidity))
         G = nx.relabel_nodes(G, mapping)
     if connected:
